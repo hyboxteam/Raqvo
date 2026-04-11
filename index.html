@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raqvo | Move faster than the market.</title>
+    <meta name="description" content="Raqvo is a high-speed POS software where shopkeepers and business owners can easily keep all their accounts. Purchase once, no monthly fees.">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Tailwind CSS Script Setup -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            primary: '#7C3AED',
+                            secondary: '#5B21B6',
+                            dark: '#A78BFA'
+                        },
+                        success: '#00F59B',
+                        warning: '#F97316',
+                    },
+                    fontFamily: {
+                        sans: ['Montserrat', 'sans-serif'],
+                        display: ['Oswald', 'sans-serif']
+                    },
+                    animation: {
+                        'blob': 'move-blobs 20s infinite alternate cubic-bezier(0.4, 0, 0.2, 1)',
+                    },
+                    keyframes: {
+                        'move-blobs': {
+                            '0%': { transform: 'translate(0, 0) scale(1) rotate(0deg)' },
+                            '50%': { transform: 'translate(10%, 20%) scale(1.1) rotate(180deg)' },
+                            '100%': { transform: 'translate(-10%, -10%) scale(0.9) rotate(360deg)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom Tailwind Layers to keep HTML exceptionally clean -->
+    <style type="text/tailwindcss">
+        @layer base {
+            body {
+                @apply bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-slate-50 font-sans transition-colors duration-300 overflow-x-hidden;
+            }
+            h1, h2, h3, h4, h5, h6 {
+                @apply font-display font-bold uppercase tracking-wide;
+            }
+            h1 { @apply text-4xl md:text-5xl lg:text-6xl leading-tight italic mb-6; }
+            h2 { @apply text-3xl md:text-4xl mb-4 text-brand-primary dark:text-brand-dark; }
+            h3 { @apply text-xl md:text-2xl mb-2; }
+            p { @apply text-lg text-slate-600 dark:text-slate-400 mb-6 leading-relaxed; }
+        }
+
+        @layer components {
+            .container-custom {
+                @apply w-full max-w-7xl mx-auto px-6 md:px-12;
+            }
+            .surface-card {
+                @apply bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-8 md:p-12 shadow-xl shadow-slate-200/20 dark:shadow-none;
+            }
+            .nav-link {
+                @apply font-bold text-sm uppercase tracking-wider relative after:absolute after:bottom-[-5px] after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:bg-brand-primary dark:after:bg-brand-dark after:transition-all after:duration-300;
+            }
+            .section-pad {
+                @apply py-16 md:py-24 relative;
+            }
+            .reveal {
+                @apply opacity-0 translate-y-8 transition-all duration-1000 ease-out;
+            }
+            .reveal.active {
+                @apply opacity-100 translate-y-0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="fixed top-0 left-0 w-full bg-white/85 dark:bg-slate-900/85 backdrop-blur-md z-50 border-b border-slate-200 dark:border-slate-800 py-4 transition-colors duration-300">
+        <div class="container-custom flex justify-between items-center">
+            <!-- Logo -->
+            <a href="#" class="flex items-center gap-2 font-display text-2xl font-bold text-brand-primary dark:text-brand-dark tracking-wide">
+                <svg class="w-10 h-10" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path fill-rule="evenodd" clip-rule="evenodd" d="
+                    M120 115 H320 L360 155 V255 L320 295 L380 385 H320 L260 295 H180 V385 H120 V235 L180 175 H120 V115 Z 
+                    M180 175 H280 L300 195 V215 L280 235 H180 V175 Z" fill="currentColor"/>
+                </svg>
+                RAQVO
+            </a>
+            
+            <!-- Desktop Links -->
+            <ul id="nav-links" class="hidden md:flex gap-8 items-center text-slate-800 dark:text-slate-100">
+                <li><a href="#home" class="nav-link">Home</a></li>
+                <li><a href="#about" class="nav-link">About</a></li>
+                <li><a href="#how-it-works" class="nav-link">How It Works</a></li>
+                <li><a href="#why-us" class="nav-link">Why We</a></li>
+                <li><a href="#contributors" class="nav-link">Team</a></li>
+                <li><a href="#contact" class="nav-link">Contact</a></li>
+            </ul>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-4">
+                <button id="themeToggle" class="text-2xl text-slate-800 dark:text-slate-100 hover:text-brand-primary transition-colors focus:outline-none" aria-label="Toggle Theme">
+                    <i class='bx bx-moon'></i>
+                </button>
+                <button id="mobileMenuBtn" class="md:hidden text-3xl text-slate-800 dark:text-slate-100 focus:outline-none">
+                    <i class='bx bx-menu'></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden absolute top-full left-0 w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex-col items-center py-6 gap-6 shadow-lg">
+            <a href="#home" class="nav-link mobile-link">Home</a>
+            <a href="#about" class="nav-link mobile-link">About</a>
+            <a href="#how-it-works" class="nav-link mobile-link">How It Works</a>
+            <a href="#why-us" class="nav-link mobile-link">Why We</a>
+            <a href="#contributors" class="nav-link mobile-link">Team</a>
+            <a href="#contact" class="nav-link mobile-link">Contact</a>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section id="home" class="relative min-h-screen flex items-center justify-center text-center overflow-hidden pt-24">
+        <!-- Blobs Background -->
+        <div class="absolute inset-0 z-[-1] overflow-hidden">
+            <div class="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-brand-primary/20 dark:bg-brand-primary/10 blur-[80px] rounded-[40%_60%_70%_30%/40%_50%_60%_50%] animate-blob"></div>
+            <div class="absolute bottom-[-20%] right-[-10%] w-[60vw] h-[60vw] bg-success/20 dark:bg-success/10 blur-[80px] rounded-[60%_40%_30%_70%/50%_60%_40%_50%] animate-blob" style="animation-delay: -10s;"></div>
+        </div>
+
+        <div class="container-custom max-w-4xl reveal z-10">
+            <span class="inline-block px-5 py-2 bg-brand-primary text-white rounded-full text-xs font-black uppercase tracking-widest mb-8">Currently in Development</span>
+            <h1>MOVE FASTER THAN<br>THE MARKET.</h1>
+            <p class="text-2xl font-bold text-slate-900 dark:text-slate-50 mb-6">Powered by the High-Speed Decoupling Engine to sync prices across your entire store in milliseconds.</p>
+            <p>Raqvo is a software where shopkeepers and business owners can easily keep all their accounts. There is no need to buy expensive software or pay money every month. Your account is yours, no one can see yours. Inventory management, barcode and QR scanning, and many more features. Purchase Raqvo just once and earn and enjoy your profits comfortably for the rest of your life.</p>
+        </div>
+    </section>
+
+    <!-- ABOUT SECTION -->
+    <section id="about" class="container-custom section-pad reveal">
+        <div class="surface-card">
+            <h2>The Brain & The Muscle</h2>
+            <p class="text-xl font-bold text-slate-900 dark:text-slate-50 mb-4">As an AI-first product lab, <a href="https://hybox.netlify.app" target="_blank" class="text-brand-primary dark:text-brand-dark underline hover:no-underline">HyBox</a> is the "Mind" where ideas are architected, while Raqvo is the "Muscle"—a practical, high-performance engine built to empower retailers and developers with zero-budget constraints.</p>
+            <p class="mb-0">We are building an ecosystem designed strictly for efficiency. No bloated dashboards, no recurring SaaS subscriptions, just raw execution to empower the local shopkeeper.</p>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="how-it-works" class="container-custom section-pad reveal">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+            <h2>How We Work</h2>
+            <p>Data-Label Decoupling ke asool par chalta engine</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div class="bg-white dark:bg-slate-800 p-8 rounded-xl border-l-4 border-brand-primary relative shadow hover:-translate-y-2 transition-transform duration-300 overflow-hidden">
+                <span class="font-display text-6xl font-black text-slate-100 dark:text-slate-700/50 absolute top-4 right-4 leading-none z-0">01</span>
+                <div class="relative z-10">
+                    <h3 class="text-xl mt-4">Static Label Generation</h3>
+                    <p class="text-sm">Sab se pehle, shopkeeper har product ke liye aik unique barcode generate karta hai. <strong>Unique ID:</strong> Yeh barcode sirf aik Product ID (SKU) store karta hai, qeemat nahi. <strong>One-Time Print:</strong> Aap ko sticker sirf aik dafa print kar ke lagana parta hai.</p>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-8 rounded-xl border-l-4 border-brand-primary relative shadow hover:-translate-y-2 transition-transform duration-300 overflow-hidden">
+                <span class="font-display text-6xl font-black text-slate-100 dark:text-slate-700/50 absolute top-4 right-4 leading-none z-0">02</span>
+                <div class="relative z-10">
+                    <h3 class="text-xl mt-4">The Cloud Brain</h3>
+                    <p class="text-sm">Jab shopkeeper system mein kisi item ki detail daltay hain, toh qeemat database mein store ho jati hai. <strong>Dynamic Control:</strong> Market mein qeemat barhti hai, toh sirf dashboard se qeemat tabdeel karni parti hai. <strong>Real-time Update:</strong> System foran nayi qeemat dikhane lagta hai.</p>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-8 rounded-xl border-l-4 border-brand-primary relative shadow hover:-translate-y-2 transition-transform duration-300 overflow-hidden">
+                <span class="font-display text-6xl font-black text-slate-100 dark:text-slate-700/50 absolute top-4 right-4 leading-none z-0">03</span>
+                <div class="relative z-10">
+                    <h3 class="text-xl mt-4">High-Speed Interaction</h3>
+                    <p class="text-sm">Jab customer counter par ata hai: <strong>Instant Scan:</strong> Barcode reader sticker ko scan karta hai. <strong>Assembly-Level Fetching:</strong> Raqvo engine foran database se latest price uthata hai. <strong>Bidirectional Action:</strong> Bill generate hota hai aur stock update ho jata hai.</p>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-8 rounded-xl border-l-4 border-brand-primary relative shadow hover:-translate-y-2 transition-transform duration-300 overflow-hidden">
+                <span class="font-display text-6xl font-black text-slate-100 dark:text-slate-700/50 absolute top-4 right-4 leading-none z-0">04</span>
+                <div class="relative z-10">
+                    <h3 class="text-xl mt-4">Smart Monitoring</h3>
+                    <p class="text-sm">Background tasks: <strong>Expiry Watchman:</strong> Stock ki dates check karta hai aur expiry alerts bhejta hai. <strong>Business Intelligence:</strong> Har sale ke sath, real-time mein total revenue aur munafa (profit) dikhata rehta hai.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- WHY US & PHILOSOPHY -->
+    <section id="why-us" class="container-custom section-pad reveal">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center mb-24">
+            <div>
+                <h2>What Makes Us Different</h2>
+                <p>Raqvo stands out from traditional POS systems by replacing rigid hardware-dependent workflows with a high-performance, flexible digital engine. Standard systems require re-printing every item when prices change. Raqvo introduces Data-Label Decoupling.</p>
+                <p>Built by HyBox, it prioritizes execution over complex software. Engineered in Vanilla JS to ensure an "Assembly-level" feel, providing direct instantaneous hardware interaction without the lag found in heavy frameworks.</p>
+            </div>
+            <div class="surface-card">
+                <h3>Core Advantages</h3>
+                <ul class="mt-6 space-y-4">
+                    <li class="flex items-start gap-4 font-bold text-slate-800 dark:text-slate-100"><i class='bx bx-check-circle text-2xl text-success'></i> Data-Label Decoupling Engine</li>
+                    <li class="flex items-start gap-4 font-bold text-slate-800 dark:text-slate-100"><i class='bx bx-check-circle text-2xl text-success'></i> Zero Monthly Subscriptions (One-time)</li>
+                    <li class="flex items-start gap-4 font-bold text-slate-800 dark:text-slate-100"><i class='bx bx-check-circle text-2xl text-success'></i> Vanilla JS Assembly-Level Performance</li>
+                    <li class="flex items-start gap-4 font-bold text-slate-800 dark:text-slate-100"><i class='bx bx-check-circle text-2xl text-success'></i> Comprehensive BI Hub</li>
+                    <li class="flex items-start gap-4 font-bold text-slate-800 dark:text-slate-100"><i class='bx bx-check-circle text-2xl text-success'></i> Automated Expiry Alerts</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="surface-card text-center max-w-4xl mx-auto">
+            <h2>Team Philosophy</h2>
+            <p class="mb-0">The philosophy of Raqvo is deeply rooted in the core values of the HyBox product lab: <em>speed, execution, and absolute clarity</em>. We believe that in a rapidly shifting economic landscape, the ability to pivot and update is the ultimate competitive advantage. This is why Raqvo is built on the principle of <strong>"Move Faster Than Market,"</strong> prioritizing real-time agility over manual processes. At Raqvo, we value Function Over Hype and Execution Over Ideas.</p>
+        </div>
+    </section>
+
+    <!-- DIRECTION -->
+    <section class="container-custom section-pad reveal">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+            <div class="surface-card">
+                <h2>Long-Term Direction</h2>
+                <p>Raqvo ki long-term direction aik aise ecosystem ki tameer hai jahan retail automation sirf baray stores tak mahdood na rahe. Hum Raqvo ko mukammal retail operating system banana chahte hain.</p>
+                <ul class="mt-6 space-y-4 text-slate-800 dark:text-slate-100">
+                    <li class="flex items-center gap-3"><i class='bx bx-globe text-2xl text-brand-primary'></i> <strong>Global Scalability:</strong> Pakistan se shuruat, international scale.</li>
+                    <li class="flex items-center gap-3"><i class='bx bx-brain text-2xl text-brand-primary'></i> <strong>AI-Driven Inventory:</strong> Predict karna ke aage kya mangwana hai.</li>
+                    <li class="flex items-center gap-3"><i class='bx bx-laptop text-2xl text-brand-primary'></i> <strong>Hardware-Agnostic:</strong> Kisi bhi purane laptop par chalao.</li>
+                    <li class="flex items-center gap-3"><i class='bx bx-network-chart text-2xl text-brand-primary'></i> <strong>Decentralized Network:</strong> Dukan-daron ka digital sync.</li>
+                </ul>
+            </div>
+            <div class="surface-card">
+                <h2>Who This Is For</h2>
+                <ul class="mt-6 space-y-5 text-slate-800 dark:text-slate-100">
+                    <li class="flex items-start gap-3"><i class='bx bxs-user-badge text-2xl text-warning'></i> <div><strong>Independent Shopkeepers:</strong><p class="text-sm m-0">Small/medium retailers tired of complex POS.</p></div></li>
+                    <li class="flex items-start gap-3"><i class='bx bx-trending-up text-2xl text-warning'></i> <div><strong>High-Inflation Markets:</strong><p class="text-sm m-0">Update prices instantly without re-stickering.</p></div></li>
+                    <li class="flex items-start gap-3"><i class='bx bx-code-alt text-2xl text-warning'></i> <div><strong>Zero-Budget Developers:</strong><p class="text-sm m-0">Blueprint for Vanilla JS hardware integration.</p></div></li>
+                    <li class="flex items-start gap-3"><i class='bx bx-time-five text-2xl text-warning'></i> <div><strong>Efficiency-Focused:</strong><p class="text-sm m-0">Minimize waste, maximize profit.</p></div></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONTRIBUTORS -->
+    <section id="contributors" class="container-custom section-pad reveal">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+            <h2>The Brains Behind The Muscle</h2>
+            <p>HyBox Product Lab Core Team - Expected Release May 1, 2026</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8" id="teamContainer">
+            <!-- Injected by JS -->
+        </div>
+    </section>
+
+    <!-- CONTACT FORM SECTION -->
+    <section id="contact" class="container-custom section-pad reveal">
+        <div class="max-w-4xl mx-auto surface-card">
+            <h2 class="text-center mb-2">Send us a message</h2>
+            <p class="text-center mb-10">Have questions? Send us your feedback or queries, and we'll get back to you soon.</p>
+
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-800 dark:text-slate-100 mb-2">Full Name</label>
+                        <input type="text" id="name" required class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all" placeholder="Enter your name">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-800 dark:text-slate-100 mb-2">Email Address</label>
+                        <input type="email" id="email" required class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all" placeholder="Enter your email">
+                    </div>
+                </div>
+
+                <!-- Star Rating component -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-800 dark:text-slate-100 mb-2">Rate Us</label>
+                    <div id="rating" class="flex gap-2 text-3xl text-slate-400 cursor-pointer">
+                        <i class='bx bx-star transition-colors'></i>
+                        <i class='bx bx-star transition-colors'></i>
+                        <i class='bx bx-star transition-colors'></i>
+                        <i class='bx bx-star transition-colors'></i>
+                        <i class='bx bx-star transition-colors'></i>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-800 dark:text-slate-100 mb-2">Message</label>
+                    <textarea id="message" rows="5" required class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all" placeholder="Write your message here..."></textarea>
+                </div>
+
+                <div class="pt-4 flex flex-col items-center">
+                    <button onclick="submitForm()" class="w-full md:w-auto bg-brand-primary hover:bg-brand-secondary text-white font-bold py-4 px-12 rounded-full transition-all shadow-lg hover:shadow-brand-primary/50 flex items-center justify-center gap-2">
+                        <span id="submit-text">Send Message</span>
+                        <span id="submitting-text" class="hidden">Sending...</span>
+                        <i id="spinner" class='bx bx-loader-alt animate-spin hidden text-xl'></i>
+                    </button>
+                    
+                    <div id="successMessage" class="hidden text-success font-bold mt-6 bg-success/10 px-6 py-3 rounded-lg border border-success/20 w-full text-center">
+                        <i class='bx bx-check-circle mr-2'></i> Thank you! Your message has been sent successfully.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 pt-16 pb-8 text-center mt-8">
+        <div class="container-custom">
+            <div class="flex flex-col items-center gap-4 mb-12">
+                <h2 class="text-2xl md:text-3xl">Ready to move faster?</h2>
+                <p>Currently in development. Get in touch with the HyBox team.</p>
+                <div class="flex flex-col sm:flex-row gap-4 mt-4">
+                    <a href="mailto:mail.hybox@gmail.com" class="inline-flex items-center gap-2 bg-slate-100 dark:bg-slate-900 px-6 py-3 rounded-full font-bold text-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+                        <i class='bx bx-envelope text-brand-primary'></i> mail.hybox@gmail.com
+                    </a>
+                    <a href="https://github.com/hyboxteam" target="_blank" class="inline-flex items-center gap-2 bg-slate-100 dark:bg-slate-900 px-6 py-3 rounded-full font-bold text-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+                        <i class='bx bxl-github text-brand-primary'></i> @hyboxteam
+                    </a>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-center gap-2 font-display text-xl font-bold text-brand-primary dark:text-brand-dark tracking-wide mb-4">
+                <svg class="w-8 h-8" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path fill-rule="evenodd" clip-rule="evenodd" d="
+                    M120 115 H320 L360 155 V255 L320 295 L380 385 H320 L260 295 H180 V385 H120 V235 L180 175 H120 V115 Z 
+                    M180 175 H280 L300 195 V215 L280 235 H180 V175 Z" fill="currentColor"/>
+                </svg>
+                HyBox
+            </div>
+            <p class="text-sm font-bold m-0 text-slate-500">© 2026 HyBox. Move faster than Market.</p>
+        </div>
+    </footer>
+
+    <!-- MAIN LOGIC SCRIPTS -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            /* 1. THEME SWITCHER LOGIC */
+            const themeToggle = document.getElementById('themeToggle');
+            const htmlTag = document.documentElement;
+            const themeIcon = themeToggle.querySelector('i');
+
+            // Set default (Light)
+            let isDark = false; 
+            
+            themeToggle.addEventListener('click', () => {
+                isDark = !isDark;
+                if(isDark) {
+                    htmlTag.classList.add('dark');
+                    themeIcon.classList.replace('bx-moon', 'bx-sun');
+                } else {
+                    htmlTag.classList.remove('dark');
+                    themeIcon.classList.replace('bx-sun', 'bx-moon');
+                }
+            });
+
+            /* 2. MOBILE MENU LOGIC */
+            const mobileBtn = document.getElementById('mobileMenuBtn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const mobileLinks = document.querySelectorAll('.mobile-link');
+            
+            mobileBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+                mobileMenu.classList.toggle('flex');
+            });
+
+            // Close menu on link click
+            mobileLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenu.classList.add('hidden');
+                    mobileMenu.classList.remove('flex');
+                });
+            });
+
+            /* 3. SCROLL REVEAL ANIMATION */
+            const reveals = document.querySelectorAll('.reveal');
+            const revealOnScroll = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if(entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                        observer.unobserve(entry.target); 
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            reveals.forEach(reveal => revealOnScroll.observe(reveal));
+
+            /* 4. DYNAMIC TEAM RENDER */
+            const teamJSON = [
+                {"id":"6a1e8513-af59-473d-b4a7-43eac3050775","name":"SAWERA EHSAR","role":"TEAM LEAD / FRONTEND DEVELOPER","img_url":"img/4.webp","display_order":2},
+                {"id":"7dc8be02-4903-44d2-a7f0-ce61f13b5d0d","name":"MUHAMMAD ABDULLAH","role":"IDEATOR","img_url":"img/18.webp","display_order":4},
+                {"id":"c669c153-42a3-4451-bd83-3c16f31ec88b","name":"USMAN IZHAR","role":"TOOLS & INFRASTRUCTURE","img_url":"img/17.webp","display_order":3},
+                {"id":"fccb38bf-bd0a-4a17-a3c5-b405637db256","name":"MUHAMMAD AWAIS","role":"FOUNDER / ENGINEER","img_url":"img/6.webp","display_order":1}
+            ];
+
+            teamJSON.sort((a, b) => a.display_order - b.display_order);
+            const teamContainer = document.getElementById('teamContainer');
+            
+            teamJSON.forEach(member => {
+                const card = document.createElement('div');
+                card.className = 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden text-center shadow-lg hover:-translate-y-2 transition-transform duration-300';
+                
+                card.innerHTML = `
+                    <img src="${member.img_url}" alt="${member.name}" class="w-full h-[300px] object-cover border-b-4 border-brand-primary bg-slate-200 dark:bg-slate-700" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=7C3AED&color=fff&size=300';">
+                    <div class="p-6">
+                        <h4 class="text-lg font-bold mb-1">${member.name}</h4>
+                        <p class="text-xs text-brand-primary dark:text-brand-dark font-black m-0 uppercase tracking-widest">${member.role}</p>
+                    </div>
+                `;
+                teamContainer.appendChild(card);
+            });
+
+            /* LUCIDE INIT */
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+
+        /* =========================================
+           5. CONTACT FORM & STAR RATING LOGIC
+           ========================================= */
+        const rating = document.getElementById('rating');
+        const stars = Array.from(rating.children);
+
+        stars.forEach((star, index) => {
+            star.addEventListener('click', () => {
+                clearActiveStars();
+                setActiveStars(index);
+            });
+            star.addEventListener('mouseenter', () => {
+                highlightStars(index);
+            });
+            star.addEventListener('mouseleave', clearHighlightStars);
+        });
+
+        rating.addEventListener('mouseleave', () => {
+            clearActiveStars();
+            restoreActiveStars();
+        });
+
+        function setActiveStars(index) {
+            for (let i = 0; i <= index; i++) {
+                // Tailwind classes for Active Solid stars
+                stars[i].classList.add('active', 'bxs-star', 'text-yellow-400');
+                stars[i].classList.remove('bx-star', 'text-slate-400');
+            }
+            localStorage.setItem('rating', index + 1);
+        }
+
+        function restoreActiveStars() {
+            const storedRating = parseInt(localStorage.getItem('rating'));
+            if (!isNaN(storedRating) && storedRating > 0) {
+                setActiveStars(storedRating - 1);
+            }
+        }
+
+        function clearActiveStars() {
+            stars.forEach(star => {
+                // Return to default Outline Stars
+                star.classList.remove('active', 'bxs-star', 'text-yellow-400');
+                star.classList.add('bx-star', 'text-slate-400');
+            });
+        }
+
+        function highlightStars(index) {
+            clearActiveStars();
+            for (let i = 0; i <= index; i++) {
+                stars[i].classList.add('active', 'bxs-star', 'text-yellow-400');
+                stars[i].classList.remove('bx-star', 'text-slate-400');
+            }
+        }
+
+        function clearHighlightStars() {
+            clearActiveStars();
+            restoreActiveStars();
+        }
+
+        restoreActiveStars();
+
+        function submitForm() {
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const message = document.getElementById('message').value.trim();
+            const storedRating = parseInt(localStorage.getItem('rating'));
+
+            if (!name || !email || !message || isNaN(storedRating)) {
+                alert('Please fill out all fields and select a rating star.');
+                return;
+            }
+
+            const feedback = { name, email, rating: storedRating, message };
+            const feedbackList = JSON.parse(localStorage.getItem('feedbackList') || '[]');
+            feedbackList.push(feedback);
+            localStorage.setItem('feedbackList', JSON.stringify(feedbackList));
+
+            const subject = 'New Feedback from Raqvo Website';
+            const body = `<p><strong>Name:</strong> ${name}</p><p><strong>Email:</strong> ${email}</p><p><strong>Rating:</strong> ${storedRating} Stars</p><p><strong>Message:</strong><br>${message}</p>`;
+
+            const apiUrl = 'https://backend-pico.onrender.com/aero/run/self-email-api?pk=v1-Z0FBQUFBQnBnUHhjZTVGZHVHd0E0alZybnpsbkpTaHpzd05nRmJWbFd4VGJaWWNsTG1SZzdrRzVFWjc4THFUVXRQT05wUElhdnYxd0lzcjVSckxPNnBua3lQQlotd0FfRFE9PQ==';
+            const requestOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ subject, body })
+            };
+
+            // Toggle Button UI to Loading State
+            document.getElementById('submit-text').classList.add('hidden');
+            document.getElementById('submitting-text').classList.remove('hidden');
+            document.getElementById('spinner').classList.remove('hidden');
+            document.getElementById('successMessage').classList.add('hidden');
+
+            fetch(apiUrl, requestOptions)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('HTTP error ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Success behavior
+                        document.getElementById('successMessage').classList.remove('hidden');
+                        document.getElementById('name').value = '';
+                        document.getElementById('email').value = '';
+                        document.getElementById('message').value = '';
+                        localStorage.removeItem('rating');
+                        clearActiveStars();
+                        
+                        // Hide success message after 5 seconds
+                        setTimeout(() => {
+                             document.getElementById('successMessage').classList.add('hidden');
+                        }, 5000);
+                    } else {
+                        alert('There was an error sending your feedback. Please try again later.');
+                        console.error('API Error:', data);
+                    }
+                })
+                .catch(error => {
+                    alert('There was an error sending your feedback. Please try again later.');
+                    console.error('Fetch Error:', error);
+                })
+                .finally(() => {
+                    // Restore Button UI
+                    document.getElementById('submit-text').classList.remove('hidden');
+                    document.getElementById('submitting-text').classList.add('hidden');
+                    document.getElementById('spinner').classList.add('hidden');
+                });
+        }
+    </script>
+</body>
+</html>
