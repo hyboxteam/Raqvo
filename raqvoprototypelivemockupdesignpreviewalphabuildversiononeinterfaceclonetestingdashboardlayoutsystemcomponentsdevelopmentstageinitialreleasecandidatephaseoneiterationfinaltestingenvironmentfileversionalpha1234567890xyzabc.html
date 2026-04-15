@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raqvo Terminal v1.3 | Idle</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { raqvo: '#8A2BE2', canvas: '#F8FAFC', surface: '#FFFFFF', borderClr: '#E2E8F0', textMain: '#0F172A' },
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* INDUSTRIAL LOCKDOWN */
+        * { -webkit-user-select: none; user-select: none; cursor: default; }
+        body { overflow: hidden; height: 100vh; background: #F8FAFC; }
+        input { cursor: text !important; -webkit-user-select: text !important; user-select: text !important; }
+        input:focus { outline: none; border-color: #8A2BE2 !important; box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.1); }
+        
+        /* UI TRANSITIONS */
+        #sidebar { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); overflow: hidden; }
+        .nav-btn { white-space: nowrap; transition: all 0.2s; }
+        .nav-text { transition: opacity 0.2s; opacity: 1; }
+        .collapsed { width: 88px !important; }
+        .collapsed .nav-text { opacity: 0; display: none; }
+        .collapsed .nav-btn { justify-content: center; padding-left: 0; padding-right: 0; }
+        
+        /* SCROLLBARS */
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+        .custom-scroll:hover::-webkit-scrollbar-thumb { background: #8A2BE2; }
+
+        /* ANIMATIONS */
+        .modal-enter { animation: modalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        
+        .welcome-fade { animation: fadeOut 0.8s ease-in-out forwards; }
+        @keyframes fadeOut { to { opacity: 0; visibility: hidden; z-index: -1; transform: scale(1.05); } }
+
+        /* FLASH ON ADD (SPEED OF LIGHT UX) */
+        .flash-row { animation: highlightFlash 0.4s ease-out forwards; }
+        @keyframes highlightFlash {
+            0% { background-color: rgba(138, 43, 226, 0.3); transform: scale(0.98); }
+            100% { background-color: transparent; transform: scale(1); }
+        }
+
+        /* --- HARDCORE PRINT ENGINE --- */
+        @media print {
+            @page { margin: 0; size: A4; }
+            body { background: white !important; overflow: visible !important; height: auto !important; }
+            #welcome-screen, #main-app, #modals-container { display: none !important; }
+            #print-engine { display: block !important; padding: 10mm; }
+            .print-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40mm, 1fr)); gap: 5mm; align-items: start; }
+            .qr-sticker { border: 1px solid #000; padding: 4mm; text-align: center; break-inside: avoid; background: white; }
+            .qr-sticker img { display: block; margin: 0 auto; width: 25mm; height: 25mm; }
+            .qr-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 8pt; font-weight: 800; margin-top: 2mm; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: black; }
+            .qr-price { font-family: 'JetBrains Mono', monospace; font-size: 10pt; font-weight: 900; margin-top: 1mm; color: black; }
+            .qr-sku { font-family: 'JetBrains Mono', monospace; font-size: 6pt; color: #666; margin-top: 1mm; }
+        }
+        @media screen { #print-engine { display: none; } }
+    </style>
+</head>
+<body class="flex flex-col h-screen relative">
+
+    <div id="welcome-screen" class="absolute inset-0 bg-raqvo z-[999] flex flex-col items-center justify-center text-white">
+        <div class="mb-8 animate-bounce">
+            <svg width="140" height="140" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M120 115 H320 L360 155 V255 L320 295 L380 385 H320 L260 295 H180 V385 H120 V235 L180 175 H120 V115 Z M180 175 H280 L300 195 V215 L280 235 H180 V175 Z" fill="white"/>
+            </svg>
+        </div>
+        <h1 class="text-5xl font-black italic tracking-tighter">RAQVO v1.3</h1>
+        <p class="text-white/80 font-bold uppercase tracking-[0.4em] mt-3 text-sm">Industrial Engine Active</p>
+        <div class="mt-12 h-1.5 w-64 bg-white/20 rounded-full overflow-hidden">
+            <div id="loader-bar" class="h-full bg-white w-0 transition-all duration-[1000ms] ease-out"></div>
+        </div>
+    </div>
+
+    <div id="main-app" class="flex-1 flex overflow-hidden">
+        
+        <aside id="sidebar" class="w-64 bg-surface border-r border-borderClr flex flex-col z-40 shrink-0">
+            <div class="p-6 flex items-center gap-4 border-b border-borderClr h-[88px] shrink-0">
+                <div class="w-10 h-10 shrink-0">
+                    <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M120 115 H320 L360 155 V255 L320 295 L380 385 H320 L260 295 H180 V385 H120 V235 L180 175 H120 V115 Z M180 175 H280 L300 195 V215 L280 235 H180 V175 Z" fill="#8A2BE2"/>
+                    </svg>
+                </div>
+                <span class="nav-text font-black text-2xl italic tracking-tighter text-raqvo">RAQVO</span>
+            </div>
+
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto custom-scroll" id="nav-menu">
+                <button onclick="switchTab('pos', this)" class="nav-btn active-tab w-full flex items-center gap-4 p-4 rounded-xl bg-raqvo/10 text-raqvo font-bold border border-raqvo/20">
+                    <i data-lucide="shopping-cart" class="w-5 h-5 shrink-0"></i><span class="nav-text">Terminal</span>
+                </button>
+                <button onclick="switchTab('inventory', this)" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl hover:bg-slate-100 text-slate-500 font-bold border border-transparent">
+                    <i data-lucide="package" class="w-5 h-5 shrink-0"></i><span class="nav-text">Inventory</span>
+                </button>
+                <button onclick="switchTab('analytics', this)" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl hover:bg-slate-100 text-slate-500 font-bold border border-transparent">
+                    <i data-lucide="bar-chart-2" class="w-5 h-5 shrink-0"></i><span class="nav-text">Analytics</span>
+                </button>
+                <button onclick="switchTab('settings', this)" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl hover:bg-slate-100 text-slate-500 font-bold border border-transparent">
+                    <i data-lucide="settings" class="w-5 h-5 shrink-0"></i><span class="nav-text">Settings</span>
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-borderClr space-y-4">
+                <div class="nav-btn flex items-center gap-3 p-2">
+                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Zayan&backgroundColor=F1F5F9" class="w-10 h-10 rounded-full bg-slate-100 border border-borderClr shrink-0" alt="Avatar">
+                    <div class="nav-text flex flex-col">
+                        <span class="text-xs font-bold text-textMain">Zayan Rahmani</span>
+                        <span class="text-[10px] text-slate-400 font-mono">Admin / Partner</span>
+                    </div>
+                </div>
+                <button onclick="toggleSidebar()" class="nav-btn w-full flex items-center gap-4 p-3 rounded-xl hover:bg-slate-100 text-slate-400">
+                    <i data-lucide="panel-left-close" id="toggle-icon" class="w-5 h-5 shrink-0"></i><span class="nav-text text-xs font-bold">Collapse</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col overflow-hidden relative bg-canvas">
+            
+            <div class="h-10 bg-textMain text-white flex items-center justify-between px-6 text-[10px] font-black tracking-widest shrink-0">
+                <div class="flex gap-6 items-center">
+                    <span id="hw-status" class="flex items-center gap-2 text-slate-400"><span class="w-2 h-2 bg-slate-500 rounded-full"></span> NO SCANNER</span>
+                    <span class="text-slate-600">|</span>
+                    <span class="text-slate-300">F10: PAY</span>
+                    <span class="text-slate-300">ESC: CLEAR</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="flex items-center gap-1 text-slate-400"><span id="sync-pulse" class="w-2 h-2 rounded-full bg-slate-600"></span> SYNC</span>
+                    <div id="live-clock" class="font-mono text-raqvo font-black">00:00:00</div>
+                </div>
+            </div>
+
+            <div class="flex-1 p-6 overflow-hidden">
+                
+                <div id="tab-pos" class="tab-content h-full flex gap-6">
+                    <div class="flex-1 flex flex-col gap-4 min-w-0">
+                        <div class="bg-white p-2 rounded-2xl border-2 border-borderClr shadow-sm flex items-center focus-within:border-raqvo transition-colors relative overflow-hidden">
+                            <i data-lucide="scan-barcode" class="ml-4 text-slate-400 w-6 h-6 z-10"></i>
+                            <input type="text" id="barcode-input" placeholder="Scan Barcode or Enter SKU..." class="flex-1 p-4 text-xl font-black bg-transparent z-10 relative" autofocus autocomplete="off">
+                            <div id="scan-flash" class="absolute inset-0 bg-green-400 opacity-0 transition-opacity duration-200 pointer-events-none"></div>
+                        </div>
+                        <div id="pos-grid" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 overflow-y-auto custom-scroll pr-2 pb-10">
+                            </div>
+                    </div>
+
+                    <div class="w-[400px] bg-white rounded-[32px] border border-borderClr shadow-xl flex flex-col overflow-hidden shrink-0">
+                        <div class="p-8 flex-1 flex flex-col overflow-hidden">
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="font-black italic text-slate-400 tracking-tighter text-sm uppercase">Active Ledger</h2>
+                                <button onclick="clearCart()" class="text-[10px] font-bold text-red-500 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded transition-colors">CLEAR</button>
+                            </div>
+                            <div id="cart-items" class="flex-1 overflow-y-auto space-y-3 custom-scroll pr-2"></div>
+                            
+                            <div class="mt-6 pt-6 border-t border-slate-100">
+                                <p class="text-[10px] font-black text-raqvo uppercase mb-1 tracking-widest">Total Payable</p>
+                                <div class="flex items-end gap-2">
+                                    <span class="text-2xl font-mono text-slate-400 mb-1">Rs.</span>
+                                    <h1 id="cart-total" class="text-5xl font-mono font-black text-textMain tracking-tighter">0</h1>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="processTransaction()" class="bg-raqvo text-white p-6 font-black text-xl tracking-widest hover:brightness-110 active:scale-95 transition-all flex justify-center items-center gap-2">
+                            CHARGE AMOUNT <i data-lucide="arrow-right" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="tab-inventory" class="tab-content hidden h-full flex flex-col">
+                    <div class="flex justify-between items-center mb-6 shrink-0">
+                        <div>
+                            <h2 class="text-3xl font-black italic text-raqvo">STOCK VAULT</h2>
+                            <p class="text-sm font-bold text-slate-500">Manage products, critical thresholds, and pricing.</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="openPrintModal()" class="bg-slate-100 border border-borderClr text-textMain px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-200 shadow-sm">
+                                <i data-lucide="printer" class="w-5 h-5 text-raqvo"></i> BULK PRINT QR
+                            </button>
+                            <button onclick="openItemModal()" class="bg-textMain text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-800 shadow-sm">
+                                <i data-lucide="plus" class="w-5 h-5"></i> ADD PRODUCT
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-3xl border border-borderClr overflow-hidden shadow-sm flex-1 flex flex-col">
+                        <div class="overflow-y-auto custom-scroll flex-1">
+                            <table class="w-full text-left relative">
+                                <thead class="bg-slate-50 text-[10px] font-black uppercase text-slate-400 sticky top-0 z-10 shadow-sm border-b border-borderClr">
+                                    <tr>
+                                        <th class="p-6">SKU Code</th>
+                                        <th class="p-6">Product Name</th>
+                                        <th class="p-6">Stock Level</th>
+                                        <th class="p-6">Price (PKR)</th>
+                                        <th class="p-6 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inv-table-body" class="divide-y divide-borderClr"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-analytics" class="tab-content hidden h-full flex flex-col">
+                    <h2 class="text-3xl font-black italic text-raqvo mb-2">ANALYTICS ENGINE</h2>
+                    <p class="text-sm font-bold text-slate-500 mb-8">Real-time performance and profit margins.</p>
+                    
+                    <div class="grid grid-cols-3 gap-6 mb-6 shrink-0">
+                        <div class="bg-white p-6 rounded-3xl border border-borderClr shadow-sm">
+                            <i data-lucide="trending-up" class="w-8 h-8 text-raqvo mb-4 bg-raqvo/10 p-1.5 rounded-lg"></i>
+                            <p class="text-xs font-bold text-slate-400 uppercase">Gross Revenue</p>
+                            <h3 class="text-3xl font-mono font-black mt-1" id="stat-revenue">Rs. 0</h3>
+                        </div>
+                        <div class="bg-white p-6 rounded-3xl border border-borderClr shadow-sm">
+                            <i data-lucide="pie-chart" class="w-8 h-8 text-green-500 mb-4 bg-green-50 p-1.5 rounded-lg"></i>
+                            <p class="text-xs font-bold text-slate-400 uppercase">Estimated Profit</p>
+                            <h3 class="text-3xl font-mono font-black mt-1 text-green-600" id="stat-profit">Rs. 0</h3>
+                        </div>
+                        <div class="bg-white p-6 rounded-3xl border border-borderClr shadow-sm">
+                            <i data-lucide="shopping-bag" class="w-8 h-8 text-blue-500 mb-4 bg-blue-50 p-1.5 rounded-lg"></i>
+                            <p class="text-xs font-bold text-slate-400 uppercase">Items Sold</p>
+                            <h3 class="text-3xl font-mono font-black mt-1" id="stat-sold">0</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white flex-1 rounded-3xl border border-borderClr shadow-sm p-8 flex items-center justify-center flex-col text-slate-400 border-dashed">
+                        <i data-lucide="bar-chart-3" class="w-16 h-16 mb-4 opacity-30"></i>
+                        <p class="font-bold">v1.3 Profit Tracker Active. Cloud Sync ready.</p>
+                    </div>
+                </div>
+
+                <div id="tab-settings" class="tab-content hidden h-full overflow-y-auto custom-scroll pr-2">
+                    <h2 class="text-3xl font-black italic text-raqvo mb-8">SYSTEM PARAMETERS</h2>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white p-8 rounded-3xl border border-borderClr shadow-sm">
+                            <div class="flex items-center justify-between mb-6">
+                                <div>
+                                    <h3 class="font-black text-xl mb-1">Hardware Interface</h3>
+                                    <p class="text-slate-500 text-sm">Manage Barcode Scanners and Audio Haptics.</p>
+                                </div>
+                                <i data-lucide="cpu" class="w-8 h-8 text-slate-300"></i>
+                            </div>
+                            <button onclick="connectMockDevice()" id="btn-connect" class="bg-textMain text-white p-4 rounded-xl w-full font-black flex justify-center items-center gap-2 hover:bg-slate-800 transition-all">
+                                <i data-lucide="usb" class="w-5 h-5"></i> INIT HARDWARE SCAN
+                            </button>
+                        </div>
+
+                        <div class="bg-red-50 p-8 rounded-3xl border border-red-200 shadow-sm relative overflow-hidden">
+                            <div class="absolute inset-0 opacity-5 pointer-events-none" style="background-image: repeating-linear-gradient(45deg, #ef4444 0, #ef4444 10px, transparent 10px, transparent 20px);"></div>
+                            <div class="relative z-10">
+                                <div class="flex items-center justify-between mb-6">
+                                    <div>
+                                        <h3 class="font-black text-xl text-red-600 mb-1">Nuclear Reset</h3>
+                                        <p class="text-red-500 text-sm">Hard reset of local DB.</p>
+                                    </div>
+                                    <i data-lucide="alert-triangle" class="w-8 h-8 text-red-400"></i>
+                                </div>
+                                <button onclick="openModal('confirm-modal')" class="bg-red-600 text-white p-4 rounded-xl w-full font-black mt-6 hover:bg-red-700 shadow-[0_4px_20px_-5px_rgba(220,38,38,0.5)]">
+                                    EXECUTE WIPE
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <div id="modals-container">
+        
+        <div id="success-overlay" class="fixed inset-0 bg-raqvo/95 z-[100] hidden items-center justify-center flex-col text-white backdrop-blur-sm">
+            <div class="modal-enter text-center flex flex-col items-center">
+                <i data-lucide="check-circle-2" class="w-24 h-24 mb-6 text-green-400 drop-shadow-lg"></i>
+                <h2 class="text-6xl font-black italic mb-2 tracking-tighter">PAYMENT SECURED</h2>
+                <p class="font-bold opacity-80 text-2xl font-mono mt-4 bg-white/10 px-8 py-3 rounded-full border border-white/20" id="success-amount">Rs. 0</p>
+                <button onclick="closeSuccess()" class="mt-12 border-2 border-white/50 bg-white text-raqvo px-12 py-5 rounded-full font-black hover:bg-transparent hover:text-white transition-all flex items-center gap-2 text-lg shadow-2xl hover:scale-105">
+                    NEXT CUSTOMER <i data-lucide="arrow-right" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="item-modal" class="fixed inset-0 bg-textMain/70 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+            <div class="bg-white w-full max-w-lg rounded-[32px] p-8 shadow-2xl modal-enter border border-borderClr">
+                <div class="flex justify-between items-center mb-6 border-b border-borderClr pb-4">
+                    <h2 id="modal-title" class="text-2xl font-black text-textMain italic">Add Product</h2>
+                    <button onclick="closeModal('item-modal')" class="text-slate-400 hover:text-red-500 bg-slate-50 p-2 rounded-full transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] font-black uppercase text-slate-500 ml-2">Barcode / SKU</label>
+                            <input type="text" id="m-sku" class="w-full p-3 bg-slate-50 border border-borderClr rounded-2xl font-mono font-bold mt-1 text-base">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black uppercase text-slate-500 ml-2">Product Name</label>
+                            <input type="text" id="m-name" class="w-full p-3 bg-slate-50 border border-borderClr rounded-2xl font-bold mt-1 text-base">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] font-black uppercase text-slate-500 ml-2">Sale Price (PKR)</label>
+                            <input type="number" id="m-price" class="w-full p-3 bg-slate-50 border border-borderClr rounded-2xl font-mono font-bold mt-1 text-base text-raqvo">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black uppercase text-slate-500 ml-2">Cost Price (PKR)</label>
+                            <input type="number" id="m-cost" class="w-full p-3 bg-slate-50 border border-borderClr rounded-2xl font-mono font-bold mt-1 text-base text-blue-600">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] font-black uppercase text-slate-500 ml-2">Current Stock</label>
+                            <input type="number" id="m-stock" class="w-full p-3 bg-slate-50 border border-borderClr rounded-2xl font-mono font-bold mt-1 text-base">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black uppercase text-slate-500 ml-2">Alert Threshold</label>
+                            <input type="number" id="m-threshold" class="w-full p-3 bg-red-50 border border-red-200 rounded-2xl font-mono font-bold mt-1 text-base text-red-600">
+                        </div>
+                    </div>
+                    <input type="hidden" id="m-original-sku">
+                    <div class="pt-4">
+                        <button onclick="saveItem()" id="btn-save-item" class="w-full bg-raqvo text-white py-4 rounded-2xl font-black tracking-widest hover:bg-[#7322BE] transition-all text-lg">SAVE PRODUCT</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="print-modal" class="fixed inset-0 bg-textMain/80 backdrop-blur-md z-[100] hidden items-center justify-center p-4">
+            <div class="bg-white w-full max-w-2xl rounded-[32px] overflow-hidden shadow-2xl modal-enter flex flex-col max-h-[90vh]">
+                <div class="p-8 border-b border-borderClr flex justify-between items-center bg-slate-50">
+                    <div>
+                        <h2 class="text-2xl font-black text-raqvo flex items-center gap-3 italic"><i data-lucide="printer" class="w-6 h-6"></i> BULK QR ENGINE</h2>
+                    </div>
+                    <button onclick="closeModal('print-modal')" class="text-slate-400 hover:text-red-500 bg-white border border-borderClr p-2 rounded-full transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-8 custom-scroll bg-canvas">
+                    <div id="print-list" class="space-y-3"></div>
+                </div>
+                <div class="p-8 border-t border-borderClr bg-white flex justify-between items-center">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Labels</p>
+                        <p class="text-3xl font-mono font-black text-textMain" id="total-labels-count">0</p>
+                    </div>
+                    <button onclick="executePrint()" class="bg-textMain text-white px-10 py-5 rounded-2xl font-black tracking-widest hover:bg-slate-800 transition-all shadow-xl">
+                        PRINT LABELS
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="confirm-modal" class="fixed inset-0 bg-textMain/90 backdrop-blur-md z-[200] hidden items-center justify-center p-4">
+            <div class="bg-white w-full max-w-sm rounded-[32px] p-8 text-center modal-enter shadow-2xl border-4 border-red-500">
+                <i data-lucide="flame" class="w-16 h-16 text-red-500 mx-auto mb-4"></i>
+                <h2 class="text-3xl font-black mb-2 text-textMain tracking-tighter">Are you sure?</h2>
+                <div class="flex flex-col gap-3 mt-8">
+                    <button onclick="executeNuclearReset()" class="bg-red-600 text-white py-4 rounded-2xl font-black tracking-widest">WIPE</button>
+                    <button onclick="closeModal('confirm-modal')" class="bg-slate-100 text-textMain py-4 rounded-2xl font-black tracking-widest">CANCEL</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="print-engine" class="print-grid"></div>
+
+    <audio id="sfx-success" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
+    <audio id="sfx-payment" src="https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3" preload="auto"></audio>
+
+    <script>
+        // --- EDGE-HAPTICS (AUDIO) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSuccess() {
+            const s = document.getElementById('sfx-success');
+            s.currentTime = 0; s.play().catch(e => {});
+        }
+        
+        function playPayment() {
+            const s = document.getElementById('sfx-payment');
+            s.currentTime = 0; s.play().catch(e => {});
+        }
+
+        function playErrorBuzz() {
+            // Web Audio API: Zero-latency offline sawtooth buzz
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // --- CORE DATA SCHEMA (v1.3) ---
+        const defaultInv = [
+            { sku: 'TRG-894', name: 'Tarang Milk (1L)', price: 280, costPrice: 240, stockCount: 15, minThreshold: 20 },
+            { sku: 'FNR-102', name: 'Fine Rice (5KG)', price: 1450, costPrice: 1200, stockCount: 50, minThreshold: 10 },
+            { sku: 'SNT-001', name: 'Synth Engine Oil', price: 4200, costPrice: 3500, stockCount: 5, minThreshold: 8 },
+            { sku: 'LAYS-SLT', name: 'Lays Salted (L)', price: 100, costPrice: 85, stockCount: 120, minThreshold: 25 }
+        ];
+        
+        let inventory = JSON.parse(localStorage.getItem('raqvo_inv')) || defaultInv;
+        let cart = JSON.parse(localStorage.getItem('raqvo_cart')) || []; // Bulletproof Recovery
+        let stats = JSON.parse(localStorage.getItem('raqvo_stats')) || { revenue: 0, profit: 0, sold: 0 };
+        let editMode = false;
+
+        // --- INIT ---
+        window.onload = () => {
+            lucide.createIcons();
+            renderAll();
+            updateStatsUI();
+            
+            setTimeout(() => { document.getElementById('loader-bar').style.width = '100%'; }, 50);
+            setTimeout(() => {
+                document.getElementById('welcome-screen').classList.add('welcome-fade');
+                document.getElementById('barcode-input').focus();
+            }, 1000); // Faster load
+        };
+
+        // --- BULLETPROOF FORCE-FOCUS ---
+        document.addEventListener('click', (e) => {
+            // Don't steal focus if user is actively typing in a modal or editing
+            if(e.target.tagName !== 'INPUT' && document.getElementById('tab-pos').classList.contains('hidden') === false) {
+                setTimeout(() => { document.getElementById('barcode-input').focus(); }, 2000);
+            }
+        });
+
+        // --- STATE SYNC & RENDER ---
+        function triggerSyncPulse() {
+            const pulse = document.getElementById('sync-pulse');
+            pulse.classList.replace('bg-slate-600', 'bg-green-400');
+            pulse.classList.add('shadow-[0_0_8px_#4ade80]');
+            setTimeout(() => {
+                pulse.classList.replace('bg-green-400', 'bg-slate-600');
+                pulse.classList.remove('shadow-[0_0_8px_#4ade80]');
+            }, 300);
+        }
+
+        function saveState() {
+            localStorage.setItem('raqvo_inv', JSON.stringify(inventory));
+            localStorage.setItem('raqvo_cart', JSON.stringify(cart));
+            localStorage.setItem('raqvo_stats', JSON.stringify(stats));
+            triggerSyncPulse();
+        }
+
+        function renderAll() {
+            saveState();
+            
+            // 1. Terminal Grid (Optimized HTML injection)
+            let gridHtml = '';
+            let vaultHtml = '';
+
+            inventory.forEach(item => {
+                const isLow = item.stockCount <= item.minThreshold;
+                const borderClass = isLow ? 'border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.2)]' : 'border-borderClr hover:border-raqvo';
+                const tagClass = isLow ? 'bg-red-100 text-red-600' : 'bg-slate-50 text-slate-400 group-hover:bg-raqvo group-hover:text-white';
+                
+                gridHtml += `
+                    <div onclick="addToCart('${item.sku}')" class="bg-white p-5 rounded-[24px] border-2 ${borderClass} transition-all active:scale-95 group cursor-pointer flex flex-col justify-between h-36">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <p class="text-[10px] font-black ${tagClass} inline-block px-2 py-0.5 rounded uppercase tracking-wider transition-colors">${item.sku}</p>
+                                <span class="text-[10px] font-mono font-bold ${isLow ? 'text-red-500' : 'text-slate-400'}">Qty:${item.stockCount}</span>
+                            </div>
+                            <h3 class="font-bold text-sm text-textMain leading-tight line-clamp-2 mt-2">${item.name}</h3>
+                        </div>
+                        <p class="font-mono text-xl font-black text-raqvo">Rs.${item.price}</p>
+                    </div>
+                `;
+
+                vaultHtml += `
+                    <tr class="hover:bg-slate-50/80 transition-colors group">
+                        <td class="p-5 font-mono text-xs font-bold text-slate-500">${item.sku}</td>
+                        <td class="p-5 font-bold text-textMain">${item.name}</td>
+                        <td class="p-5 font-mono font-bold ${isLow ? 'text-red-500' : 'text-textMain'}">${item.stockCount} <span class="text-[10px] text-slate-400">/ ${item.minThreshold}</span></td>
+                        <td class="p-5 font-mono font-black text-raqvo text-base">Rs.${item.price}</td>
+                        <td class="p-5 text-right space-x-2 opacity-40 group-hover:opacity-100 transition-opacity">
+                            <button onclick="editItem('${item.sku}')" class="p-2 text-slate-500 hover:text-blue-600 bg-white rounded-lg border border-borderClr shadow-sm"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('pos-grid').innerHTML = gridHtml;
+            document.getElementById('inv-table-body').innerHTML = vaultHtml || `<tr><td colspan="5" class="p-8 text-center text-slate-400 font-bold">Vault empty.</td></tr>`;
+            
+            updateCartUI();
+            lucide.createIcons();
+        }
+
+        function updateStatsUI() {
+            document.getElementById('stat-revenue').innerText = `Rs. ${stats.revenue.toLocaleString()}`;
+            document.getElementById('stat-profit').innerText = `Rs. ${stats.profit.toLocaleString()}`;
+            document.getElementById('stat-sold').innerText = stats.sold;
+        }
+
+        // --- NAVIGATION ---
+        function switchTab(id, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if(btn.id !== 'toggle-icon' && btn.parentElement.id === 'nav-menu') {
+                    btn.className = "nav-btn w-full flex items-center gap-4 p-4 rounded-xl hover:bg-slate-100 text-slate-500 font-bold border border-transparent";
+                }
+            });
+            if(btnElement) btnElement.className = "nav-btn active-tab w-full flex items-center gap-4 p-4 rounded-xl bg-raqvo/10 text-raqvo font-bold border border-raqvo/20";
+            document.getElementById('tab-' + id).classList.remove('hidden');
+            if(id === 'pos') document.getElementById('barcode-input').focus();
+        }
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            sb.classList.toggle('collapsed');
+            document.getElementById('toggle-icon').setAttribute('data-lucide', sb.classList.contains('collapsed') ? 'panel-right-close' : 'panel-left-close');
+            lucide.createIcons();
+        }
+
+        // --- TERMINAL ENGINE ---
+        document.getElementById('barcode-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const val = this.value.trim();
+                if(val) addToCart(val);
+                this.value = '';
+            }
+        });
+
+        function addToCart(sku) {
+            const item = inventory.find(i => i.sku === sku || i.sku.toLowerCase() === sku.toLowerCase());
+            if(item) {
+                cart.unshift({...item, cId: Math.random().toString(36).substr(2, 9), justAdded: true});
+                playSuccess();
+                
+                // Visual input flash
+                const flash = document.getElementById('scan-flash');
+                flash.classList.remove('opacity-0', 'duration-200');
+                flash.classList.add('opacity-30', 'duration-75');
+                setTimeout(() => { flash.classList.remove('opacity-30', 'duration-75'); flash.classList.add('opacity-0', 'duration-200'); }, 100);
+                
+                saveState();
+                updateCartUI();
+            } else {
+                playErrorBuzz();
+            }
+        }
+
+        function removeFromCart(cId) { cart = cart.filter(i => i.cId !== cId); saveState(); updateCartUI(); }
+        function clearCart() { cart = []; saveState(); updateCartUI(); document.getElementById('barcode-input').focus(); }
+
+        function updateCartUI() {
+            const box = document.getElementById('cart-items');
+            let tot = 0;
+            
+            // Dynamic Title Update
+            document.title = cart.length > 0 ? `Raqvo (Cart: ${cart.length})` : `Raqvo Terminal v1.3 | Idle`;
+
+            if(cart.length === 0) {
+                box.innerHTML = `<div class="h-full flex items-center justify-center text-slate-300 font-bold text-sm">Awaiting items...</div>`;
+            } else {
+                box.innerHTML = cart.map((item) => {
+                    tot += item.price;
+                    const flashCls = item.justAdded ? 'flash-row' : '';
+                    item.justAdded = false; // reset flag
+                    
+                    return `
+                        <div class="flex justify-between items-center bg-canvas p-4 rounded-2xl border border-borderClr hover:border-raqvo/40 transition-colors ${flashCls}">
+                            <div class="flex-1 min-w-0 pr-3">
+                                <p class="text-sm font-black text-textMain truncate">${item.name}</p>
+                                <p class="text-[10px] font-mono text-slate-400 mt-1 uppercase tracking-widest">${item.sku}</p>
+                            </div>
+                            <div class="flex items-center gap-4 shrink-0">
+                                <span class="font-mono font-black text-lg text-raqvo">${item.price}</span>
+                                <button onclick="removeFromCart('${item.cId}')" class="text-slate-300 hover:text-red-500 bg-white hover:bg-red-50 p-2 rounded-lg border border-borderClr transition-all">
+                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            document.getElementById('cart-total').innerText = tot.toLocaleString();
+            lucide.createIcons();
+        }
+
+        function processTransaction() {
+            if(cart.length === 0) return;
+            
+            let transRevenue = 0;
+            let transProfit = 0;
+            let transItems = cart.length;
+
+            cart.forEach(cItem => {
+                transRevenue += cItem.price;
+                transProfit += (cItem.price - (cItem.costPrice || 0));
+                
+                // Deduct Inventory
+                const invItem = inventory.find(i => i.sku === cItem.sku);
+                if(invItem) invItem.stockCount = Math.max(0, invItem.stockCount - 1);
+            });
+
+            // Update Stats
+            stats.revenue += transRevenue;
+            stats.profit += transProfit;
+            stats.sold += transItems;
+            
+            updateStatsUI();
+            
+            playPayment();
+            document.getElementById('success-amount').innerText = `Rs. ${transRevenue.toLocaleString()}`;
+            document.getElementById('success-overlay').classList.remove('hidden');
+            document.getElementById('success-overlay').classList.add('flex');
+        }
+
+        function closeSuccess() {
+            document.getElementById('success-overlay').classList.add('hidden');
+            document.getElementById('success-overlay').classList.remove('flex');
+            clearCart();
+            renderAll(); // Re-render to show updated stock levels
+        }
+
+        // --- INVENTORY CRUD ---
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
+
+        function openItemModal() {
+            editMode = false;
+            ['m-sku', 'm-name', 'm-price', 'm-cost', 'm-stock', 'm-threshold', 'm-original-sku'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('modal-title').innerText = "Add Product";
+            openModal('item-modal');
+            document.getElementById('m-sku').focus();
+        }
+
+        function editItem(sku) {
+            const i = inventory.find(x => x.sku === sku);
+            if(!i) return;
+            editMode = true;
+            document.getElementById('m-sku').value = i.sku;
+            document.getElementById('m-name').value = i.name;
+            document.getElementById('m-price').value = i.price;
+            document.getElementById('m-cost').value = i.costPrice || 0;
+            document.getElementById('m-stock').value = i.stockCount || 0;
+            document.getElementById('m-threshold').value = i.minThreshold || 0;
+            document.getElementById('m-original-sku').value = i.sku;
+            document.getElementById('modal-title').innerText = "Edit Product";
+            openModal('item-modal');
+        }
+
+        function saveItem() {
+            const sku = document.getElementById('m-sku').value.trim();
+            const name = document.getElementById('m-name').value.trim();
+            const price = parseInt(document.getElementById('m-price').value) || 0;
+            const costPrice = parseInt(document.getElementById('m-cost').value) || 0;
+            const stockCount = parseInt(document.getElementById('m-stock').value) || 0;
+            const minThreshold = parseInt(document.getElementById('m-threshold').value) || 0;
+            const orig = document.getElementById('m-original-sku').value;
+
+            if(sku && name && price) {
+                const newItem = { sku, name, price, costPrice, stockCount, minThreshold };
+                if(editMode) {
+                    const idx = inventory.findIndex(x => x.sku === orig);
+                    if(idx > -1) inventory[idx] = newItem;
+                } else {
+                    if(inventory.some(x => x.sku === sku)) { playErrorBuzz(); return; }
+                    inventory.push(newItem);
+                }
+                renderAll();
+                closeModal('item-modal');
+            } else {
+                playErrorBuzz();
+            }
+        }
+
+        // --- BULK QR (v1.2 code maintained) ---
+        function openPrintModal() {
+            if(inventory.length === 0) return;
+            const list = document.getElementById('print-list');
+            list.innerHTML = inventory.map(item => `
+                <div class="flex items-center justify-between bg-white p-4 rounded-2xl border border-borderClr shadow-sm">
+                    <div>
+                        <p class="font-black text-textMain">${item.name}</p>
+                        <p class="text-[10px] font-mono text-slate-400">SKU: ${item.sku}</p>
+                    </div>
+                    <input type="number" min="0" value="0" data-sku="${item.sku}" class="qr-qty-input w-24 p-3 bg-canvas border border-borderClr rounded-xl font-mono font-black text-center text-lg text-raqvo" oninput="updateTotalLabels()">
+                </div>
+            `).join('');
+            document.getElementById('total-labels-count').innerText = "0";
+            openModal('print-modal');
+        }
+
+        function updateTotalLabels() {
+            let total = 0;
+            document.querySelectorAll('.qr-qty-input').forEach(i => total += parseInt(i.value) || 0);
+            document.getElementById('total-labels-count').innerText = total;
+        }
+
+        function executePrint() {
+            const inputs = document.querySelectorAll('.qr-qty-input');
+            const printEngine = document.getElementById('print-engine');
+            printEngine.innerHTML = ''; 
+            let toPrint = [];
+            
+            inputs.forEach(input => {
+                const qty = parseInt(input.value) || 0;
+                if(qty > 0) {
+                    const sku = input.getAttribute('data-sku');
+                    const item = inventory.find(i => i.sku === sku);
+                    for(let i=0; i<qty; i++) toPrint.push(item);
+                }
+            });
+
+            if(toPrint.length === 0) return;
+
+            toPrint.forEach((item, index) => {
+                const sDiv = document.createElement('div'); sDiv.className = 'qr-sticker';
+                const qrC = document.createElement('div'); qrC.id = `qr-${index}`;
+                const nDiv = document.createElement('div'); nDiv.className = 'qr-title'; nDiv.innerText = item.name;
+                const pDiv = document.createElement('div'); pDiv.className = 'qr-price'; pDiv.innerText = `Rs.${item.price}`;
+                const skDiv = document.createElement('div'); skDiv.className = 'qr-sku'; skDiv.innerText = item.sku;
+                sDiv.append(pDiv, qrC, nDiv, skDiv);
+                printEngine.appendChild(sDiv);
+                new QRCode(qrC, { text: item.sku, width: 128, height: 128, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.M });
+            });
+
+            closeModal('print-modal');
+            setTimeout(() => window.print(), 500);
+        }
+
+        // --- UTILS ---
+        function executeNuclearReset() { localStorage.clear(); location.reload(); }
+        function connectMockDevice() {
+            playSuccess();
+            const stat = document.getElementById('hw-status');
+            stat.innerHTML = `<span class="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-[0_0_8px_#4ade80]"></span> SCANNER ACTIVE`;
+            stat.className = "flex items-center gap-2 text-green-400";
+            document.getElementById('btn-connect').innerHTML = `<i data-lucide="check" class="w-5 h-5"></i> HARDWARE SYNCED`;
+            lucide.createIcons();
+        }
+
+        setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+        window.onkeydown = (e) => {
+            if(e.key === 'F10') { e.preventDefault(); processTransaction(); }
+            if(e.key === 'Escape') { e.preventDefault(); clearCart(); }
+        };
+
+    </script>
+</body>
+</html>
