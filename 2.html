@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raqvo | Move faster than the market.</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { primary: '#7C3AED', secondary: '#5B21B6', dark: '#A78BFA' },
+                        success: '#00F59B',
+                    },
+                    fontFamily: { sans: ['Montserrat', 'sans-serif'], display: ['Oswald', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer base {
+            body { @apply bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-50 transition-colors duration-300; }
+            h1 { @apply text-5xl md:text-7xl font-display font-black italic tracking-tighter; }
+            h2 { @apply text-3xl md:text-4xl font-display font-bold uppercase mb-6; }
+        }
+
+        @layer components {
+            .card-3d {
+                @apply transition-all duration-500 ease-out hover:[transform:rotateX(5deg)_rotateY(-5deg)_translateZ(20px)] hover:shadow-2xl hover:shadow-brand-primary/20 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-3xl p-8;
+                perspective: 1000px;
+            }
+            .btn-premium {
+                @apply relative overflow-hidden bg-brand-primary text-white px-8 py-4 rounded-full font-bold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-brand-primary/30;
+            }
+            .nav-link { @apply font-bold text-xs uppercase tracking-widest hover:text-brand-primary transition-colors; }
+        }
+    </style>
+</head>
+<body class="perspective-1000">
+
+    <!-- NAVBAR -->
+    <nav class="fixed top-0 w-full z-50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50">
+        <div class="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
+            <a href="#" class="flex items-center gap-2 font-display text-2xl font-bold tracking-tighter text-brand-primary">
+                <i class='bx bxs-zap text-3xl'></i> RAQVO
+            </a>
+            <ul class="hidden md:flex gap-8 items-center">
+                <li><a href="#home" class="nav-link">Engine</a></li>
+                <li><a href="#how-it-works" class="nav-link">Modules</a></li>
+                <li><a href="#why-us" class="nav-link">Logic</a></li>
+                <li><a href="#contact" class="nav-link">Get Access</a></li>
+            </ul>
+            <button id="themeToggle" class="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-xl"><i class='bx bx-moon'></i></button>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section id="home" class="min-h-screen flex items-center justify-center pt-20 px-6 relative overflow-hidden">
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full opacity-20 pointer-events-none">
+            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-primary rounded-full blur-[120px] animate-pulse"></div>
+            <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-success rounded-full blur-[120px]"></div>
+        </div>
+
+        <div class="max-w-5xl text-center z-10">
+            <span class="px-4 py-1 rounded-full border border-brand-primary/30 text-brand-primary text-xs font-black tracking-widest uppercase mb-6 inline-block bg-brand-primary/5">Retail Engine v1.3</span>
+            <h1 class="mb-8">DOMINATE THE <span class="text-brand-primary">MARKET</span> PACE.</h1>
+            <p class="text-xl md:text-2xl text-slate-500 dark:text-slate-400 max-w-3xl mx-auto mb-10 leading-relaxed">
+                Industrial-grade OS for retailers who demand absolute speed. Own your data. Own your speed. No monthly fees.
+            </p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="#contact" class="btn-premium">Deploy System</a>
+                <a href="#how-it-works" class="px-8 py-4 rounded-full font-bold border-2 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">View Architecture</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- MODULES (3D CARDS) -->
+    <section id="how-it-works" class="max-w-7xl mx-auto px-6 py-24">
+        <h2 class="text-center">The Core Architecture</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
+            <div class="card-3d">
+                <i class='bx bx-terminal text-5xl text-brand-primary mb-6'></i>
+                <h3 class="text-xl font-bold mb-4">NLP Terminal</h3>
+                <p class="text-slate-500 text-sm">Control your shop with natural language. "Add 2 Large Coffees" — instant execution, zero friction.</p>
+            </div>
+            <div class="card-3d">
+                <i class='bx bx-braille text-5xl text-success mb-6'></i>
+                <h3 class="text-xl font-bold mb-4">Hybrid-Private Storage</h3>
+                <p class="text-slate-500 text-sm">Offline-first technology. Your business runs locally on the edge, syncing to the cloud only when you want.</p>
+            </div>
+            <div class="card-3d">
+                <i class='bx bx-data text-5xl text-brand-dark mb-6'></i>
+                <h3 class="text-xl font-bold mb-4">Data Decoupling</h3>
+                <p class="text-slate-500 text-sm">Prices change, labels don't have to. Real-time updates across all nodes without manual re-entry.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONTACT SECTION (IMPROVED) -->
+    <section id="contact" class="max-w-7xl mx-auto px-6 py-24">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div>
+                <h2 class="mb-4">Get Early Access</h2>
+                <p class="text-lg text-slate-500 mb-8">Ready to move faster? Our engineers will help you transition from legacy systems to Raqvo's high-speed architecture.</p>
+                
+                <div class="space-y-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-brand-primary/10 flex items-center justify-center text-brand-primary text-2xl">
+                            <i class='bx bx-envelope'></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold uppercase text-slate-400">Email Us</p>
+                            <p class="font-bold">hello@raqvo.com</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-success/10 flex items-center justify-center text-success text-2xl">
+                            <i class='bx bxl-github'></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold uppercase text-slate-400">Open Source</p>
+                            <p class="font-bold">github.com/raqvo-core</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form with 3D Effect -->
+            <div class="card-3d p-10 bg-slate-100/50 dark:bg-slate-800/50 backdrop-blur-sm shadow-2xl">
+                <form class="space-y-6">
+                    <div>
+                        <label class="block text-xs font-black uppercase mb-2 tracking-widest text-slate-500">Name</label>
+                        <input type="text" class="w-full bg-white dark:bg-slate-900 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-brand-primary transition-all outline-none shadow-inner" placeholder="Your Name">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black uppercase mb-2 tracking-widest text-slate-500">Business Email</label>
+                        <input type="email" class="w-full bg-white dark:bg-slate-900 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-brand-primary transition-all outline-none shadow-inner" placeholder="name@company.com">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black uppercase mb-2 tracking-widest text-slate-500">Message</label>
+                        <textarea rows="4" class="w-full bg-white dark:bg-slate-900 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-brand-primary transition-all outline-none shadow-inner" placeholder="Tell us about your setup..."></textarea>
+                    </div>
+                    <button type="submit" class="w-full btn-premium py-5">Send Transmission</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-200 dark:border-slate-800 py-12 text-center">
+        <p class="text-sm font-bold text-slate-400">© 2026 RAQVO CORE. ENGINEERED FOR SPEED.</p>
+    </footer>
+
+    <script>
+        // Simple Theme Toggle
+        const themeBtn = document.getElementById('themeToggle');
+        themeBtn.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            const icon = themeBtn.querySelector('i');
+            icon.classList.toggle('bx-moon');
+            icon.classList.toggle('bx-sun');
+        });
+
+        // 3D Card Hover Logic (Optional refinement)
+        document.querySelectorAll('.card-3d').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = (y - centerY) / 10;
+                const rotateY = (centerX - x) / 10;
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(10px)`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)`;
+            });
+        });
+    </script>
+</body>
+</html>
